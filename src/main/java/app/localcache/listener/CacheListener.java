@@ -20,6 +20,7 @@ public class CacheListener {
     private static final CountDownLatch countDownLatch = new CountDownLatch(1);
     private static final String NAMESPACE = "local-cache";
     private final CuratorFramework zkClient;
+    private CuratorCache curatorCache;
 
     public CacheListener(String host) {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(5000, 3);
@@ -36,7 +37,7 @@ public class CacheListener {
         CuratorCacheListener curatorCacheListener = CuratorCacheListener.builder()
                 .forPathChildrenCache(NAMESPACE, zkClient, (client, event) -> handleDataChange(event, path, callback))
                 .build();
-        CuratorCache curatorCache = CuratorCache.builder(zkClient, path).build();
+        curatorCache = CuratorCache.builder(zkClient, path).build();
         curatorCache.listenable().addListener(curatorCacheListener);
         curatorCache.start();
         countDownLatch.await();
@@ -56,6 +57,8 @@ public class CacheListener {
 
     public void close() {
         logger.info("cache listener is shutting down");
+        countDownLatch.countDown();
+        curatorCache.close();
         zkClient.close();
     }
 }
