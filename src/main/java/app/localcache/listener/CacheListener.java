@@ -13,13 +13,12 @@ import java.util.concurrent.CountDownLatch;
 public class CacheListener {
     private static final CountDownLatch countDownLatch = new CountDownLatch(1);
     private static final String NAMESPACE = "local-cache";
-    private static final String HOST = "localhost:2181";
     private final CuratorFramework zkClient;
 
-    public CacheListener() {
+    public CacheListener(String host) {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(5000, 3);
         this.zkClient = CuratorFrameworkFactory.builder()
-                .connectString(HOST)
+                .connectString(host)
                 .retryPolicy(retryPolicy)
                 .namespace(NAMESPACE)
                 .build();

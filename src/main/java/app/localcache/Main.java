@@ -6,7 +6,7 @@ import app.localcache.mock.MockService;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        CacheListener cacheListener = new CacheListener();
+        CacheListener cacheListener = new CacheListener("localhost:2181");
         LocalCache localCache = new LocalCache();
         MockService mockService = new MockService(localCache);
         mockService.execute();
