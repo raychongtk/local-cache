@@ -10,6 +10,9 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import java.util.concurrent.CountDownLatch;
 
+import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_UPDATED;
+import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.INITIALIZED;
+
 public class CacheListener {
     private static final CountDownLatch countDownLatch = new CountDownLatch(1);
     private static final String NAMESPACE = "local-cache";
@@ -27,15 +30,20 @@ public class CacheListener {
 
     public void listen(String path, LambdaCallback callback) throws InterruptedException {
         CuratorCacheListener curatorCacheListener = CuratorCacheListener.builder()
-                .forPathChildrenCache(NAMESPACE, zkClient, (client, event) -> {
-                    if (event.getType() == PathChildrenCacheEvent.Type.CHILD_UPDATED && event.getData().getPath().equals(path)) {
-                        callback.execute();
-                    }
-                }).build();
+                .forPathChildrenCache(NAMESPACE, zkClient, (client, event) -> handleDataChange(event, path, callback))
+                .build();
         CuratorCache curatorCache = CuratorCache.builder(zkClient, path).build();
         curatorCache.listenable().addListener(curatorCacheListener);
         curatorCache.start();
         countDownLatch.await();
+    }
+
+    private void handleDataChange(PathChildrenCacheEvent event, String path, LambdaCallback callback) {
+        if (event.getType() == INITIALIZED) return;
+        boolean isSubscribedPath = event.getData().getPath().equals(path);
+        if (event.getType() == CHILD_UPDATED && isSubscribedPath) {
+            callback.execute();
+        }
     }
 
     public void close() {
