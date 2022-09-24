@@ -7,6 +7,8 @@ import org.apache.curator.framework.recipes.cache.CuratorCache;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -14,6 +16,7 @@ import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.
 import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.INITIALIZED;
 
 public class CacheListener {
+    private static final Logger logger = LoggerFactory.getLogger(CacheListener.class);
     private static final CountDownLatch countDownLatch = new CountDownLatch(1);
     private static final String NAMESPACE = "local-cache";
     private final CuratorFramework zkClient;
@@ -29,6 +32,7 @@ public class CacheListener {
     }
 
     public void listen(String path, LambdaCallback callback) throws InterruptedException {
+        logger.info("cache listener is connecting to zookeeper");
         CuratorCacheListener curatorCacheListener = CuratorCacheListener.builder()
                 .forPathChildrenCache(NAMESPACE, zkClient, (client, event) -> handleDataChange(event, path, callback))
                 .build();
@@ -39,14 +43,19 @@ public class CacheListener {
     }
 
     private void handleDataChange(PathChildrenCacheEvent event, String path, LambdaCallback callback) {
-        if (event.getType() == INITIALIZED) return;
-        boolean isSubscribedPath = event.getData().getPath().equals(path);
-        if (event.getType() == CHILD_UPDATED && isSubscribedPath) {
-            callback.execute();
+        if (event.getType() == INITIALIZED) {
+            logger.info("cache listener initialized");
+        } else if (event.getType() == CHILD_UPDATED) {
+            boolean isSubscribedPath = event.getData().getPath().equals(path);
+            if (isSubscribedPath) {
+                logger.info("data updated, path={}, data={}", path, new String(event.getData().getData()));
+                callback.execute();
+            }
         }
     }
 
     public void close() {
+        logger.info("cache listener is shutting down");
         zkClient.close();
     }
 }
