@@ -29,7 +29,7 @@ public class CacheListener {
         zkClient.start();
     }
 
-    public void listen(String path, LambdaCallback callback) throws InterruptedException {
+    public void listen(String path, LambdaCallback callback) {
         logger.info("cache listener is connecting to zookeeper");
         CuratorCacheListener curatorCacheListener = CuratorCacheListener.builder()
                 .forPathChildrenCache(NAMESPACE, zkClient, (client, event) -> handleDataChange(event, path, callback))
