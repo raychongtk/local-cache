@@ -10,14 +10,11 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
-
 import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_UPDATED;
 import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.INITIALIZED;
 
 public class CacheListener {
     private static final Logger logger = LoggerFactory.getLogger(CacheListener.class);
-    private static final CountDownLatch countDownLatch = new CountDownLatch(1);
     private static final String NAMESPACE = "local-cache";
     private final CuratorFramework zkClient;
     private CuratorCache curatorCache;
@@ -40,11 +37,9 @@ public class CacheListener {
         curatorCache = CuratorCache.builder(zkClient, path).build();
         curatorCache.listenable().addListener(curatorCacheListener);
         curatorCache.start();
-        countDownLatch.await();
     }
 
     private void handleDataChange(PathChildrenCacheEvent event, String path, LambdaCallback callback) {
-        countDownLatch.countDown();
         if (event.getType() == INITIALIZED) {
             logger.info("cache listener initialized");
         } else if (event.getType() == CHILD_UPDATED) {
