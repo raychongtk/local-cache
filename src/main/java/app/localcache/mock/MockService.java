@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MockService {
     private static final Logger logger = LoggerFactory.getLogger(MockService.class);
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(1);
     private final LocalCache localCache;
 
     public MockService(LocalCache localCache) {
@@ -17,7 +18,6 @@ public class MockService {
     }
 
     public void execute() {
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
         executorService.submit(() -> {
             AtomicInteger counter = new AtomicInteger();
             while (true) {
