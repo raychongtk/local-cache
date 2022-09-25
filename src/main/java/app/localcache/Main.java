@@ -8,13 +8,8 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         CacheListener cacheListener = new CacheListener("localhost:2181");
         LocalCache localCache = new LocalCache();
-        MockService mockService = new MockService(localCache);
-        mockService.execute();
-
-        try {
-            cacheListener.listen("/operation-config", localCache::evictAll);
-        } finally {
-            cacheListener.close();
-        }
+        new MockService(localCache).execute();
+        Runtime.getRuntime().addShutdownHook(new Thread(cacheListener::close));
+        cacheListener.listen("/operation-config", localCache::evictAll);
     }
 }

@@ -44,6 +44,7 @@ public class CacheListener {
     }
 
     private void handleDataChange(PathChildrenCacheEvent event, String path, LambdaCallback callback) {
+        countDownLatch.countDown();
         if (event.getType() == INITIALIZED) {
             logger.info("cache listener initialized");
         } else if (event.getType() == CHILD_UPDATED) {
@@ -57,7 +58,6 @@ public class CacheListener {
 
     public void close() {
         logger.info("cache listener is shutting down");
-        countDownLatch.countDown();
         curatorCache.close();
         zkClient.close();
     }
